@@ -1,0 +1,152 @@
+<!--        <button on-click="@this.fire('save2disk')">Test</button> -->
+<!--
+<center><legend on-tap="@this.fire('drawpress', @this.event)">BuildCon SVG</legend></center>
+-->
+<div id="pinc">
+        <img id ="svg2" src="car.svg" alt="car img" width="500">
+
+        <svg width="500" viewbox="0 0 2500 2500" id ="drawsvg" 
+        on-panstart="@this.fire('drawpress', @this.event)"
+        on-panmove="@this.fire('drawpanmove', @this.event)"
+        on-panend="@this.fire('drawpanend', @this.event)"
+        >
+        {{#draw}}
+        <line x1="{{x1}}" y1="{{y1}}" x2="{{x2}}" y2="{{y2}}" class="svgline" />
+        {{/draw}}
+        {{#if drawing}}
+        <line x1="{{lastlinestart.x}}" y1="{{lastlinestart.y}}" x2="{{lastlineend.x}}" y2="{{lastlineend.y}}" class="svglinedrawing" />
+        {{/if}}
+            Sorry, your browser does not support inline SVG.
+          </svg>        
+<!--
+    <img src="https://picsum.photos/200/300" alt="ccc" id="img">
+    <svg id="svg1" height="210" width="500">
+        <polygon points="100,10 40,198 190,78 10,78 160,198" style="fill:lime;stroke:purple;stroke-width:5;fill-rule:evenodd;"/>
+    </svg>
+-->
+</div>
+<div style="position:absolute; top:0; right:0">
+    <button on-click="@this.fire('save2disk')">Test</button>
+</div>
+<div style="top:{{magnifyerY}}px; left:{{magnifyerX}}px;
+ background-position-x:{{mBackPosX}}px; background-position-y:{{mBackPosY}}px;"
+on-panmove="@this.fire('pan', @this.event)" id="magnifyer">
+</div>
+
+
+    <!--
+-->
+<style>
+    .svgline{
+        stroke:rgb(255,0,0);
+        stroke-width:2;
+    }
+    .svglinedrawing{
+        stroke:rgba(255,0,0,0.3);
+        stroke-width:2;        
+    }
+    .svgline:hover{
+        stroke:rgb(0,2550,0);
+        stroke-width:3;
+    }
+    #magnifyer{
+        width:200px;
+        height:200px;
+        position:absolute;
+        background-image: url(car.svg), url(#drawsvg);
+        background-size: 3500px;
+        background-repeat: no-repeat, no-repeat;
+        border: 1px solid;
+        border-radius: 50%;
+    /*    clip-path: circle();
+        filter: drop-shadow(4px 4px 4px black); */
+    }
+    #svg2{
+        width:500px;
+        max-width: 5000px !important
+        
+    }
+    #drawsvg{
+        position:absolute; 
+        top:0;
+        width:500px;        
+    }
+    #svg1{
+        width:500px;
+        height:210px;
+    }
+    #img{
+        width:200px;
+        height:300px;
+    }
+    #pinch{
+        position: relative;
+        width:100%;
+    }
+</style>
+    <script>
+console.log('root.html');
+
+  component.exports = {
+    onrender: function () {
+        var self = this;   
+        let el = document.querySelector('#pinc');
+        let pz = new PinchZoom(el, {maxZoom:840});   
+        window.pz = pz;
+        this.scale = pz.getInitialZoomFactor()
+
+// document.getElementById("magnifyer").style.backgroundImage = "url('car.svg'),url('bzvz.jpg')"
+        this.on('pan', function(e){
+            console.log('panz',e.original.center.y)
+            self.set('magnifyerY',e.original.center.y-100);
+            self.set('magnifyerX',e.original.center.x-100);
+            
+            var svgW = document.getElementById('pinc').offsetWidth;
+            var svgH = document.getElementById('pinc').offsetHeight;
+            
+            self.set('mBackPosX',-1 * (e.original.center.x-0) * 3500/document.body.clientWidth + 100) ;
+            self.set('mBackPosY',-1 * (e.original.center.y-0) * 3500/document.body.clientWidth + 100);
+        })
+
+        this.on('drawpress', function(e){
+            console.log('drawpress',e)
+            var x = e.original.center.x/this.scale
+            var y = e.original.center.y/this.scale
+            self.set('lastlinestart', {x:x, y:y})
+        })
+
+        this.on('drawpanmove', function(e){
+            var x = e.original.center.x/this.scale
+            var y = e.original.center.y/this.scale
+            self.set('lastlineend', {x:x, y:y})
+            self.set('drawing',true)
+            console.log('drawpanmove')
+            //console.log('lastlineend',e.original.center)
+        })
+
+        this.on('drawpanend', function(e){
+            var x = e.original.center.x/this.scale
+            var y = e.original.center.y/this.scale
+            var s = self.get('lastlinestart')
+            self.push('draw', {x1:s.x, y1:s.y, x2:x, y2:y})
+            self.set('lastlinestart', {x:0, y:0});
+            self.set('lastlineend', {x:0, y:0});
+            self.set('drawing',false)
+            console.log('drawpanend')
+        })
+        
+
+    },
+    data: {
+      title: 'Hello World!',
+      magnifyerX:0,
+      magnifyerY:0,
+      mBackPosX:0,
+      mBackPosY:0,
+      draw:[],
+      lastlinestart:{x:0,y:0},
+      lastlineend:{x:0,y:0},
+      drawing:false
+    }
+  };
+  </script>
